@@ -42,10 +42,20 @@ download_release() {
 	filename="$2"
 
 	# TODO: Adapt the release URL convention for tinyapl
-	url="$GH_REPO/archive/v${version}.tar.gz"
+	url="$GH_REPO/archive/${version}.tar.gz"
 
 	echo "* Downloading $TOOL_NAME release $version..."
 	curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"
+}
+
+build_from_source() {
+	test -f "tinyapl.cabal" || fail "tinyapl.cabal not found in pwd."
+	cabal build exe:tinyapl || fail "tinyapl build failed."
+}
+
+find_executable() {
+	test -f "tinyapl.cabal" || fail "tinyapl.cabal not found in pwd."
+	cabal list-bin exe:tinyapl | tail -n1
 }
 
 install_version() {
@@ -61,7 +71,13 @@ install_version() {
 		mkdir -p "$install_path"
 		cp -r "$ASDF_DOWNLOAD_PATH"/* "$install_path"
 
-		# TODO: Assert tinyapl executable exists.
+		# shellcheck source=./lib/install-haskell.bash
+		source "${plugin_dir}/lib/install-haskell.bash"
+
+		cd "$install_path"
+		build_from_source
+		cp "$(find_executable)" .
+
 		local tool_cmd
 		tool_cmd="$(echo "$TOOL_TEST" | cut -d' ' -f1)"
 		test -x "$install_path/$tool_cmd" || fail "Expected $install_path/$tool_cmd to be executable."
