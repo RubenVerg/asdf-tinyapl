@@ -31,9 +31,8 @@ list_github_tags() {
 }
 
 list_all_versions() {
-	# TODO: Adapt this. By default we simply list the tag names from GitHub releases.
-	# Change this function if tinyapl has other means of determining installable versions.
-	list_github_tags
+	# list_github_tags
+	printf "%s\n\n" '0.11.0.0'
 }
 
 download_release() {
@@ -71,12 +70,16 @@ install_version() {
 		mkdir -p "$install_path"
 		cp -r "$ASDF_DOWNLOAD_PATH"/* "$install_path"
 
+		: '
 		# shellcheck source=./lib/install-haskell.bash
 		source "${plugin_dir}/lib/install-haskell.bash"
 
 		cd "$install_path"
 		build_from_source
 		cp "$(find_executable)" .
+		'
+
+		cp "${plugin_dir}/tinyapl" "$install_path"
 
 		local tool_cmd
 		tool_cmd="$(echo "$TOOL_TEST" | cut -d' ' -f1)"
